@@ -1,0 +1,1865 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCalc Pro v2</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #080B14;
+            --card: rgba(255, 255, 255, .05);
+            --purple: #8B5CF6;
+            --cyan: #00E5FF;
+            --pink: #FF4FD8;
+            --text: #ffffff;
+            --glass: blur(18px);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: white;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* LOADING */
+        #loader {
+            position: fixed;
+            inset: 0;
+            background: #080B14;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        #loader.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loader-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            border-top: 4px solid var(--cyan);
+            border-right: 4px solid var(--purple);
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 20px var(--cyan), 0 0 40px var(--purple);
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* PARTICLES */
+        #particles {
+            position: fixed;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--cyan);
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: float 10s linear infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(100vh) scale(1);
+            }
+            100% {
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 260px;
+            height: 100%;
+            background: rgba(255, 255, 255, .04);
+            backdrop-filter: blur(20px);
+            border-right: 1px solid rgba(255, 255, 255, .1);
+            padding: 20px;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .menu button {
+            background: rgba(255, 255, 255, .05);
+            border: none;
+            padding: 15px;
+            border-radius: 14px;
+            color: white;
+            cursor: pointer;
+            transition: .3s;
+            text-align: left;
+            font-size: 15px;
+        }
+
+        .menu button:hover {
+            transform: translateX(8px);
+            box-shadow: 0 0 15px var(--cyan), 0 0 25px var(--purple);
+        }
+
+        /* MAIN */
+        .main {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .page {
+            display: none;
+            animation: fade .4s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fade {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slidePage {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* WELCOME */
+        .hero {
+            padding: 30px;
+            border-radius: 24px;
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: blur(18px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            padding: 2px;
+            background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            border-radius: 24px;
+        }
+
+        .hero h1 {
+            font-size: 42px;
+            margin-bottom: 10px;
+        }
+
+        .hero p {
+            opacity: .8;
+        }
+
+        /* DASH CARDS */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, .05);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(18px);
+            transition: .3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 0 20px var(--purple), 0 0 40px rgba(139, 92, 246, .4);
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+        }
+
+        .card::before,
+        .hero::before,
+        .setting-card::before,
+        .formula-box::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, .3), transparent, rgba(0, 229, 255, .4));
+            border-radius: inherit;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* TOAST */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #101827;
+            padding: 15px 20px;
+            border-radius: 12px;
+            display: none;
+            box-shadow: 0 0 20px var(--cyan);
+            z-index: 999;
+            transition: .4s;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .toast.show {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* MOBILE */
+        .bottom-nav {
+            display: none;
+        }
+
+        .display {
+            width: 100%;
+            height: 80px;
+            border: none;
+            outline: none;
+            background: #111827;
+            color: white;
+            font-size: 32px;
+            padding: 20px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px rgba(0, 229, 255, .3);
+        }
+
+        .calc-grid,
+        .sci-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .calc-grid button,
+        .sci-grid button {
+            height: 65px;
+            border: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .06);
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: .25s;
+        }
+
+        .calc-grid button:hover,
+        .sci-grid button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--cyan);
+        }
+
+        .equal {
+            grid-column: span 2;
+            background: var(--purple) !important;
+        }
+
+        .copy {
+            grid-column: span 2;
+            background: var(--cyan) !important;
+            color: black !important;
+        }
+
+        .formula-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .formula-tabs button {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .05);
+            color: white;
+            cursor: pointer;
+        }
+
+        .formula-box {
+            background: rgba(255, 255, 255, .05);
+            padding: 25px;
+            border-radius: 20px;
+            margin-top: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .formula-box h3 {
+            margin-bottom: 10px;
+            color: var(--cyan);
+        }
+
+        .formula-box p {
+            opacity: .8;
+            margin-bottom: 15px;
+        }
+
+        .formula-box input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+        }
+
+        .formula-result {
+            margin-top: 15px;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .converter-box {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, .05);
+            backdrop-filter: blur(18px);
+        }
+
+        .converter-box select,
+        .converter-box input {
+            width: 100%;
+            padding: 14px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+        }
+
+        .converter-row {
+            display: grid;
+            grid-template-columns: 1fr 80px 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .converter-row button {
+            height: 52px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            color: white;
+            font-size: 20px;
+            font-weight: 700;
+            transition: .3s;
+        }
+
+        .converter-row button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--cyan);
+        }
+
+        .tool-box {
+            background: rgba(255, 255, 255, .05);
+            padding: 25px;
+            border-radius: 20px;
+            margin-top: 20px;
+        }
+
+        .tool-box input {
+            width: 100%;
+            padding: 14px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+        }
+
+        .tool-result {
+            margin-top: 15px;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .tool-detail {
+            margin-top: 10px;
+            opacity: .8;
+            line-height: 1.7;
+        }
+
+        .indicator {
+            height: 12px;
+            border-radius: 50px;
+            margin-top: 15px;
+            background: #1f2937;
+            overflow: hidden;
+        }
+
+        .indicator span {
+            display: block;
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--cyan), var(--purple));
+            transition: .4s;
+        }
+
+        .history-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .history-toolbar input {
+            flex: 1;
+            min-width: 220px;
+            padding: 12px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+        }
+
+        .history-toolbar button {
+            padding: 12px 16px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            background: rgba(255, 255, 255, .08);
+            color: white;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, .05);
+            padding: 18px;
+            border-radius: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .history-left {
+            flex: 1;
+        }
+
+        .history-exp {
+            font-weight: 700;
+            color: var(--cyan);
+        }
+
+        .history-time {
+            font-size: 12px;
+            opacity: .7;
+            margin-top: 6px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .history-actions button {
+            padding: 10px 14px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .btn-copy {
+            background: #00E5FF;
+            color: black !important;
+        }
+
+        .btn-reuse {
+            background: #8B5CF6;
+        }
+
+        .btn-delete {
+            background: #ff4d6d;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .setting-card {
+            background: rgba(255, 255, 255, .05);
+            padding: 25px;
+            border-radius: 20px;
+            backdrop-filter: blur(18px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .setting-card h3 {
+            margin-bottom: 15px;
+            color: var(--cyan);
+        }
+
+        .setting-card select,
+        .setting-card button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #111827;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .setting-card button:hover {
+            box-shadow: 0 0 20px var(--cyan);
+        }
+
+        .version-badge {
+            margin-top: 15px;
+            display: inline-block;
+            padding: 10px 18px;
+            border-radius: 50px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #00E5FF, #8B5CF6);
+            color: black;
+            box-shadow: 0 0 20px #00E5FF, 0 0 35px #8B5CF6;
+            animation: glowBadge 2s infinite alternate;
+        }
+
+        @keyframes glowBadge {
+            from {
+                transform: scale(1);
+            }
+            to {
+                transform: scale(1.05);
+            }
+        }
+
+        /* Ripple Effect */
+        button {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: ripple-anim 0.6s ease-out;
+            pointer-events: none;
+        }
+
+        @keyframes ripple-anim {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        @media(max-width:900px) {
+            .sidebar {
+                display: none;
+            }
+            .main {
+                margin-left: 0;
+                padding-bottom: 90px;
+            }
+            .bottom-nav {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 70px;
+                background: #111827;
+                justify-content: space-around;
+                align-items: center;
+                backdrop-filter: blur(20px);
+                border-top: 1px solid rgba(255, 255, 255, .1);
+                z-index: 100;
+            }
+            .bottom-nav button {
+                background: none;
+                border: none;
+                color: white;
+                font-size: 18px;
+                padding: 10px;
+                cursor: pointer;
+            }
+            .hero h1 {
+                font-size: 28px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loader">
+        <div class="loader-ring"></div>
+    </div>
+
+    <div id="particles"></div>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <div class="logo">SmartCalc Pro</div>
+        <div class="menu">
+            <button onclick="showPage('dashboard')">🏠 Dashboard</button>
+            <button onclick="showPage('basic')">🧮 Basic Calc</button>
+            <button onclick="showPage('scientific')">📐 Scientific</button>
+            <button onclick="showPage('formula')">📚 Formula</button>
+            <button onclick="showPage('converter')">🔄 Converter</button>
+            <button onclick="showPage('tools')">🛠 Daily Tools</button>
+            <button onclick="showPage('history')">📜 History</button>
+            <button onclick="showPage('settings')">⚙ Settings</button>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+
+        <!-- DASHBOARD -->
+        <section id="dashboard" class="page active">
+            <div class="hero">
+                <h1>Welcome to SmartCalc Pro v2</h1>
+                <p>Ultimate Futuristic Calculator Platform</p>
+            </div>
+            <div class="grid">
+                <div class="card">
+                    <h3>Total Calculation</h3>
+                    <h1 id="totalCalc">0</h1>
+                </div>
+                <div class="card">
+                    <h3>Recent Activity</h3>
+                    <p id="recentActivity">No activity</p>
+                </div>
+                <div class="card">
+                    <h3>System</h3>
+                    <p>Cyberpunk Neon Active</p>
+                </div>
+                <div class="card">
+                    <h3>Storage</h3>
+                    <p>LocalStorage Ready</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- BASIC CALC -->
+        <section id="basic" class="page">
+            <h2>Basic Calculator</h2>
+            <div class="calc-container">
+                <input id="basicDisplay" class="display" readonly value="0">
+                <div class="calc-grid">
+                    <button onclick="clearBasic()">C</button>
+                    <button onclick="backspace()">⌫</button>
+                    <button onclick="appendBasic('(')">(</button>
+                    <button onclick="appendBasic(')')">)</button>
+                    <button onclick="appendBasic('7')">7</button>
+                    <button onclick="appendBasic('8')">8</button>
+                    <button onclick="appendBasic('9')">9</button>
+                    <button onclick="appendBasic('/')">÷</button>
+                    <button onclick="appendBasic('4')">4</button>
+                    <button onclick="appendBasic('5')">5</button>
+                    <button onclick="appendBasic('6')">6</button>
+                    <button onclick="appendBasic('*')">×</button>
+                    <button onclick="appendBasic('1')">1</button>
+                    <button onclick="appendBasic('2')">2</button>
+                    <button onclick="appendBasic('3')">3</button>
+                    <button onclick="appendBasic('-')">−</button>
+                    <button onclick="appendBasic('0')">0</button>
+                    <button onclick="appendBasic('.')">.</button>
+                    <button onclick="appendBasic('%')">%</button>
+                    <button onclick="appendBasic('+')">+</button>
+                    <button class="equal" onclick="calculateBasic()">=</button>
+                    <button class="copy" onclick="copyBasic()">Copy</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SCIENTIFIC -->
+        <section id="scientific" class="page">
+            <h2>Scientific Calculator</h2>
+            <div class="sci-top">
+                <button onclick="toggleAngle()" style="padding:10px 20px;border:none;border-radius:12px;background:rgba(255,255,255,.08);color:white;cursor:pointer;margin-bottom:15px;">
+                    Mode: <span id="angleMode">DEG</span>
+                </button>
+            </div>
+            <input id="sciDisplay" class="display" readonly value="0">
+            <div class="sci-grid">
+                <button onclick="sciFunc('sin')">sin</button>
+                <button onclick="sciFunc('cos')">cos</button>
+                <button onclick="sciFunc('tan')">tan</button>
+                <button onclick="sciFunc('log')">log</button>
+                <button onclick="sciFunc('ln')">ln</button>
+                <button onclick="sciFunc('sqrt')">√</button>
+                <button onclick="sciFunc('square')">x²</button>
+                <button onclick="sciFunc('cube')">x³</button>
+                <button onclick="appendSci('7')">7</button>
+                <button onclick="appendSci('8')">8</button>
+                <button onclick="appendSci('9')">9</button>
+                <button onclick="appendSci('/')">÷</button>
+                <button onclick="appendSci('4')">4</button>
+                <button onclick="appendSci('5')">5</button>
+                <button onclick="appendSci('6')">6</button>
+                <button onclick="appendSci('*')">×</button>
+                <button onclick="appendSci('1')">1</button>
+                <button onclick="appendSci('2')">2</button>
+                <button onclick="appendSci('3')">3</button>
+                <button onclick="appendSci('-')">−</button>
+                <button onclick="appendSci('0')">0</button>
+                <button onclick="appendSci('.')">.</button>
+                <button onclick="appendSci('+')">+</button>
+                <button onclick="calculateSci()">=</button>
+                <button onclick="appendSci(Math.PI)">π</button>
+                <button onclick="appendSci(Math.E)">e</button>
+                <button onclick="factorialSci()">n!</button>
+                <button onclick="clearSci()">C</button>
+            </div>
+        </section>
+
+        <!-- FORMULA -->
+        <section id="formula" class="page">
+            <h2>📚 Formula Library</h2>
+            <div class="formula-tabs">
+                <button onclick="showFormula('luas')">Luas</button>
+                <button onclick="showFormula('volume')">Volume</button>
+                <button onclick="showFormula('keliling')">Keliling</button>
+                <button onclick="showFormula('gerak')">Gerak</button>
+                <button onclick="showFormula('keuangan')">Keuangan</button>
+                <button onclick="showFormula('statistik')">Statistik</button>
+            </div>
+            <div id="formulaContent"></div>
+        </section>
+
+        <!-- CONVERTER -->
+        <section id="converter" class="page">
+            <h2>🔄 Unit Converter</h2>
+            <div class="converter-box">
+                <select id="convCategory" onchange="changeConverter()">
+                    <option value="length">Panjang</option>
+                    <option value="weight">Berat</option>
+                    <option value="temperature">Suhu</option>
+                    <option value="time">Waktu</option>
+                    <option value="area">Luas</option>
+                    <option value="volume">Volume</option>
+                </select>
+                <input type="number" id="convInput" placeholder="Masukkan nilai" oninput="liveConvert()">
+                <div class="converter-row">
+                    <select id="fromUnit" onchange="liveConvert()"></select>
+                    <button onclick="swapUnits()">⇄</button>
+                    <select id="toUnit" onchange="liveConvert()"></select>
+                </div>
+                <div class="formula-result" id="converterResult">0</div>
+            </div>
+        </section>
+
+        <!-- TOOLS -->
+        <section id="tools" class="page">
+            <h2>🛠 Daily Tools</h2>
+            <div class="formula-tabs">
+                <button onclick="showTool('bmi')">BMI</button>
+                <button onclick="showTool('discount')">Diskon</button>
+                <button onclick="showTool('tax')">Pajak</button>
+                <button onclick="showTool('saving')">Tabungan</button>
+                <button onclick="showTool('split')">Bagi Tagihan</button>
+                <button onclick="showTool('age')">Umur</button>
+            </div>
+            <div id="toolContent"></div>
+        </section>
+
+        <!-- HISTORY -->
+        <section id="history" class="page">
+            <h2>📜 Riwayat Perhitungan</h2>
+            <div class="history-toolbar">
+                <input id="historySearch" placeholder="Cari riwayat..." oninput="renderHistory()">
+                <button onclick="clearHistory()">🗑 Hapus Semua</button>
+                <button onclick="exportHistory()">📤 Export JSON</button>
+                <input type="file" id="importFile" style="display:none" onchange="importHistory(event)">
+                <button onclick="document.getElementById('importFile').click()">📥 Import JSON</button>
+            </div>
+            <div id="historyList"></div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section id="settings" class="page">
+            <h2>⚙ Pengaturan</h2>
+            <div class="settings-grid">
+                <div class="setting-card">
+                    <h3>🎨 Theme</h3>
+                    <select id="themeSelect" onchange="changeTheme()">
+                        <option value="cyberpunk">Cyberpunk Neon</option>
+                        <option value="purple">Purple Neon</option>
+                        <option value="cyan">Cyan Neon</option>
+                        <option value="pink">Pink Neon</option>
+                    </select>
+                </div>
+                <div class="setting-card">
+                    <h3>🌐 Bahasa</h3>
+                    <select id="languageSelect" onchange="changeLanguage()">
+                        <option value="id">Bahasa Indonesia</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="setting-card">
+                    <h3>🧹 Data</h3>
+                    <button onclick="resetAllData()">Reset Semua Data</button>
+                </div>
+                <div class="setting-card">
+                    <h3>📤 Backup</h3>
+                    <button onclick="exportSettings()">Export Settings</button>
+                    <input type="file" id="settingsFile" style="display:none" onchange="importSettings(event)">
+                    <button onclick="document.getElementById('settingsFile').click()">Import Settings</button>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- BOTTOM NAV -->
+    <div class="bottom-nav">
+        <button onclick="showPage('dashboard')">🏠</button>
+        <button onclick="showPage('basic')">🧮</button>
+        <button onclick="showPage('scientific')">📐</button>
+        <button onclick="showPage('settings')">⚙</button>
+    </div>
+
+    <script>
+        // ==================== GLOBAL VARIABLES ====================
+        let basicInput = "";
+        let sciInput = "";
+        let angleMode = "DEG";
+        let formulaInterval = null;
+        let toolInterval = null;
+        let dashboardInterval = null;
+        let backupInterval = null;
+        let statsInterval = null;
+
+        // ==================== LOADING ====================
+        window.onload = () => {
+            setTimeout(() => {
+                const loader = document.getElementById("loader");
+                loader.classList.add("hidden");
+                setTimeout(() => {
+                    loader.style.display = "none";
+                }, 500);
+            }, 1200);
+
+            generateParticles();
+            loadLastConverter();
+            loadSettings();
+            showFormula("luas");
+            showTool("bmi");
+            renderHistory();
+            refreshDashboard();
+
+            // Start intervals
+            dashboardInterval = setInterval(refreshDashboard, 1000);
+            backupInterval = setInterval(autoBackup, 30000);
+            statsInterval = setInterval(updateStatistics, 1000);
+        };
+
+        // ==================== PAGE NAVIGATION ====================
+        function showPage(id) {
+            document.querySelectorAll(".page").forEach(page => {
+                page.classList.remove("active");
+            });
+            const targetPage = document.getElementById(id);
+            if (targetPage) {
+                targetPage.classList.add("active");
+            }
+            if (id === "history") {
+                renderHistory();
+            }
+            if (id === "dashboard") {
+                refreshDashboard();
+            }
+            toast("Opened " + id);
+        }
+
+        // ==================== TOAST ====================
+        function toast(text) {
+            const t = document.getElementById("toast");
+            if (!t) return;
+            t.innerText = text;
+            t.classList.add("show");
+            clearTimeout(t._timeout);
+            t._timeout = setTimeout(() => {
+                t.classList.remove("show");
+            }, 2000);
+        }
+
+        // ==================== PARTICLES ====================
+        function generateParticles() {
+            const wrap = document.getElementById("particles");
+            if (!wrap) return;
+            wrap.innerHTML = "";
+            for (let i = 0; i < 120; i++) {
+                const p = document.createElement("div");
+                p.className = "particle";
+                p.style.left = Math.random() * 100 + "%";
+                p.style.animationDuration = (5 + Math.random() * 10) + "s";
+                p.style.animationDelay = Math.random() * 5 + "s";
+                p.style.opacity = Math.random() * 0.7 + 0.2;
+                p.style.width = (Math.random() * 6 + 2) + "px";
+                p.style.height = p.style.width;
+                wrap.appendChild(p);
+            }
+        }
+
+        // ==================== RIPPLE EFFECT ====================
+        document.addEventListener("click", function(e) {
+            const btn = e.target.closest("button");
+            if (!btn) return;
+            const circle = document.createElement("span");
+            circle.classList.add("ripple");
+            const rect = btn.getBoundingClientRect();
+            circle.style.left = (e.clientX - rect.left) + "px";
+            circle.style.top = (e.clientY - rect.top) + "px";
+            circle.style.width = Math.max(rect.width, rect.height) + "px";
+            circle.style.height = circle.style.width;
+            btn.appendChild(circle);
+            setTimeout(() => {
+                circle.remove();
+            }, 600);
+        });
+
+        // ==================== BASIC CALCULATOR ====================
+        function appendBasic(v) {
+            const display = document.getElementById("basicDisplay");
+            if (!display) return;
+            if (basicInput === "0" && v !== ".") basicInput = "";
+            basicInput += v;
+            display.value = basicInput;
+        }
+
+        function clearBasic() {
+            basicInput = "";
+            const display = document.getElementById("basicDisplay");
+            if (display) display.value = "0";
+        }
+
+        function backspace() {
+            basicInput = basicInput.slice(0, -1);
+            const display = document.getElementById("basicDisplay");
+            if (display) display.value = basicInput || "0";
+        }
+
+        function calculateBasic() {
+            const display = document.getElementById("basicDisplay");
+            if (!display) return;
+            try {
+                let expression = basicInput.replace(/÷/g, "/").replace(/×/g, "*").replace(/−/g, "-").replace(/%/g,
+                    "/100");
+                let result = eval(expression);
+                display.value = result;
+                saveHistory(basicInput, result);
+                basicInput = result.toString();
+            } catch {
+                toast("Error");
+            }
+        }
+
+        function copyBasic() {
+            const display = document.getElementById("basicDisplay");
+            if (!display) return;
+            navigator.clipboard.writeText(display.value).then(() => {
+                toast("Copied");
+            }).catch(() => {
+                toast("Copy failed");
+            });
+        }
+
+        // ==================== SCIENTIFIC CALCULATOR ====================
+        function appendSci(v) {
+            const display = document.getElementById("sciDisplay");
+            if (!display) return;
+            sciInput += v;
+            display.value = sciInput;
+        }
+
+        function clearSci() {
+            sciInput = "";
+            const display = document.getElementById("sciDisplay");
+            if (display) display.value = "0";
+        }
+
+        function calculateSci() {
+            const display = document.getElementById("sciDisplay");
+            if (!display) return;
+            try {
+                let expression = sciInput.replace(/÷/g, "/").replace(/×/g, "*").replace(/−/g, "-");
+                let result = eval(expression);
+                display.value = result;
+                saveHistory(sciInput, result);
+                sciInput = result.toString();
+            } catch {
+                toast("Error");
+            }
+        }
+
+        function toggleAngle() {
+            angleMode = angleMode === "DEG" ? "RAD" : "DEG";
+            const el = document.getElementById("angleMode");
+            if (el) el.innerText = angleMode;
+            toast("Mode: " + angleMode);
+        }
+
+        function sciFunc(type) {
+            const display = document.getElementById("sciDisplay");
+            if (!display) return;
+            let num = parseFloat(display.value);
+            if (isNaN(num)) return;
+
+            let inputNum = num;
+            if (angleMode === "DEG" && (type === "sin" || type === "cos" || type === "tan")) {
+                inputNum = num * Math.PI / 180;
+            }
+
+            let result;
+            switch (type) {
+                case "sin":
+                    result = Math.sin(inputNum);
+                    break;
+                case "cos":
+                    result = Math.cos(inputNum);
+                    break;
+                case "tan":
+                    result = Math.tan(inputNum);
+                    break;
+                case "log":
+                    result = Math.log10(num);
+                    break;
+                case "ln":
+                    result = Math.log(num);
+                    break;
+                case "sqrt":
+                    result = Math.sqrt(num);
+                    break;
+                case "square":
+                    result = num ** 2;
+                    break;
+                case "cube":
+                    result = num ** 3;
+                    break;
+                default:
+                    return;
+            }
+
+            display.value = result;
+            sciInput = result.toString();
+            saveHistory(type + "(" + num + ")", result);
+        }
+
+        function factorialSci() {
+            const display = document.getElementById("sciDisplay");
+            if (!display) return;
+            let n = parseInt(display.value);
+            if (isNaN(n) || n < 0) {
+                toast("Invalid input");
+                return;
+            }
+            let f = 1;
+            for (let i = 2; i <= n; i++) {
+                f *= i;
+            }
+            display.value = f;
+            sciInput = f.toString();
+            saveHistory(n + "!", f);
+        }
+
+        // ==================== HISTORY ====================
+        function saveHistory(exp, res) {
+            let data = JSON.parse(localStorage.getItem("smartcalc_history") || "[]");
+            data.unshift({
+                exp: String(exp),
+                res: String(res),
+                time: new Date().toLocaleString()
+            });
+            // Limit history to 500 entries
+            if (data.length > 500) data = data.slice(0, 500);
+            localStorage.setItem("smartcalc_history", JSON.stringify(data));
+
+            let total = parseInt(localStorage.getItem("total_calc") || "0");
+            total++;
+            localStorage.setItem("total_calc", total.toString());
+
+            const totalCalcEl = document.getElementById("totalCalc");
+            if (totalCalcEl) totalCalcEl.innerText = total;
+
+            const recentActivityEl = document.getElementById("recentActivity");
+            if (recentActivityEl) recentActivityEl.innerText = exp + " = " + res;
+        }
+
+        function getHistory() {
+            return JSON.parse(localStorage.getItem("smartcalc_history") || "[]");
+        }
+
+        function renderHistory() {
+            const list = document.getElementById("historyList");
+            if (!list) return;
+            const keyword = (document.getElementById("historySearch")?.value || "").toLowerCase();
+            let data = getHistory();
+            if (keyword) {
+                data = data.filter(item =>
+                    (item.exp + " " + item.res).toLowerCase().includes(keyword)
+                );
+            }
+            if (data.length === 0) {
+                list.innerHTML = '<div class="card">Belum ada riwayat</div>';
+                return;
+            }
+            list.innerHTML = data.map((item, index) => `
+                        <div class="history-item">
+                            <div class="history-left">
+                                <div class="history-exp">${escapeHTML(item.exp)} = ${escapeHTML(item.res)}</div>
+                                <div class="history-time">${escapeHTML(item.time)}</div>
+                            </div>
+                            <div class="history-actions">
+                                <button class="btn-copy" onclick="copyHistory('${escapeQuotes(item.res)}')">Copy</button>
+                                <button class="btn-reuse" onclick="reuseHistory('${escapeQuotes(item.exp)}')">Reuse</button>
+                                <button class="btn-delete" onclick="deleteHistory(${index})">Delete</button>
+                            </div>
+                        </div>
+                    `).join("");
+        }
+
+        function escapeHTML(str) {
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        function copyHistory(text) {
+            navigator.clipboard.writeText(text).then(() => toast("Copied")).catch(() => toast("Copy failed"));
+        }
+
+        function deleteHistory(index) {
+            let data = getHistory();
+            data.splice(index, 1);
+            localStorage.setItem("smartcalc_history", JSON.stringify(data));
+            renderHistory();
+            toast("Deleted");
+        }
+
+        function clearHistory() {
+            if (!confirm("Hapus semua riwayat?")) return;
+            localStorage.removeItem("smartcalc_history");
+            renderHistory();
+            toast("History Cleared");
+        }
+
+        function reuseHistory(exp) {
+            showPage("basic");
+            basicInput = exp;
+            const display = document.getElementById("basicDisplay");
+            if (display) display.value = exp;
+            toast("Expression Loaded");
+        }
+
+        function exportHistory() {
+            const data = getHistory();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "smartcalc-history.json";
+            a.click();
+            URL.revokeObjectURL(url);
+            toast("Exported");
+        }
+
+        function importHistory(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error("Invalid format");
+                    localStorage.setItem("smartcalc_history", JSON.stringify(data));
+                    renderHistory();
+                    toast("Imported");
+                } catch {
+                    toast("Invalid File");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function refreshDashboard() {
+            const total = parseInt(localStorage.getItem("total_calc") || "0");
+            const totalCalcEl = document.getElementById("totalCalc");
+            if (totalCalcEl) totalCalcEl.innerText = total;
+
+            const recent = getHistory()[0];
+            const recentActivityEl = document.getElementById("recentActivity");
+            if (recentActivityEl) {
+                recentActivityEl.innerText = recent ? recent.exp + " = " + recent.res : "No Activity";
+            }
+        }
+
+        function updateStatistics() {
+            const history = getHistory();
+            const count = history.length;
+            const el = document.getElementById("historyCount");
+            if (el) el.innerText = count;
+        }
+
+        function autoBackup() {
+            const history = localStorage.getItem("smartcalc_history");
+            if (history) {
+                localStorage.setItem("smartcalc_backup", history);
+            }
+        }
+
+        // ==================== KEYBOARD SUPPORT ====================
+        document.addEventListener("keydown", e => {
+            const basicPage = document.getElementById("basic");
+            if (basicPage && basicPage.classList.contains("active")) {
+                if ("0123456789+-*/().".includes(e.key)) {
+                    e.preventDefault();
+                    appendBasic(e.key);
+                }
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    calculateBasic();
+                }
+                if (e.key === "Backspace") {
+                    e.preventDefault();
+                    backspace();
+                }
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    clearBasic();
+                }
+            }
+            const sciPage = document.getElementById("scientific");
+            if (sciPage && sciPage.classList.contains("active")) {
+                if ("0123456789+-*/().".includes(e.key)) {
+                    e.preventDefault();
+                    appendSci(e.key);
+                }
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    calculateSci();
+                }
+                if (e.key === "Escape") {
+                    e.preventDefault();
+                    clearSci();
+                }
+            }
+        });
+
+        // ==================== FORMULA LIBRARY ====================
+        const formulaData = {
+            luas: `
+                        <div class="formula-box">
+                            <h3>Luas Persegi</h3><p>Rumus: sisi × sisi</p>
+                            <input id="sisi" placeholder="Masukkan sisi" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilPersegi">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Luas Persegi Panjang</h3><p>Rumus: panjang × lebar</p>
+                            <input id="panjang" placeholder="Panjang" oninput="updateFormulaLive()">
+                            <input id="lebar" placeholder="Lebar" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilPP">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Luas Segitiga</h3><p>Rumus: ½ × alas × tinggi</p>
+                            <input id="alas" placeholder="Alas" oninput="updateFormulaLive()">
+                            <input id="tinggi" placeholder="Tinggi" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilSegitiga">0</div>
+                        </div>`,
+            volume: `
+                        <div class="formula-box">
+                            <h3>Volume Kubus</h3><p>Rumus: s³</p>
+                            <input id="vkubus" placeholder="Sisi" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilKubus">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Volume Balok</h3><p>Rumus: p × l × t</p>
+                            <input id="vp" placeholder="Panjang" oninput="updateFormulaLive()">
+                            <input id="vl" placeholder="Lebar" oninput="updateFormulaLive()">
+                            <input id="vt" placeholder="Tinggi" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilBalok">0</div>
+                        </div>`,
+            keliling: `
+                        <div class="formula-box">
+                            <h3>Keliling Persegi</h3><p>Rumus: 4 × sisi</p>
+                            <input id="ksisi" placeholder="Sisi" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilKelilingPersegi">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Keliling Lingkaran</h3><p>Rumus: 2πr</p>
+                            <input id="radius" placeholder="Radius" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilLingkaran">0</div>
+                        </div>`,
+            gerak: `
+                        <div class="formula-box">
+                            <h3>Kecepatan</h3><p>Rumus: jarak / waktu</p>
+                            <input id="jarak" placeholder="Jarak" oninput="updateFormulaLive()">
+                            <input id="waktu" placeholder="Waktu" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilKecepatan">0</div>
+                        </div>`,
+            keuangan: `
+                        <div class="formula-box">
+                            <h3>Persentase</h3><p>Nilai × persen / 100</p>
+                            <input id="nilai" placeholder="Nilai" oninput="updateFormulaLive()">
+                            <input id="persen" placeholder="Persen" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilPersen">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Bunga Sederhana</h3><p>P × R × T / 100</p>
+                            <input id="modal" placeholder="Modal" oninput="updateFormulaLive()">
+                            <input id="rate" placeholder="Rate (%)" oninput="updateFormulaLive()">
+                            <input id="tahun" placeholder="Tahun" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilBunga">0</div>
+                        </div>`,
+            statistik: `
+                        <div class="formula-box">
+                            <h3>Mean</h3><p>Pisahkan angka dengan koma</p>
+                            <input id="meanData" placeholder="10,20,30" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilMean">0</div>
+                        </div>
+                        <div class="formula-box">
+                            <h3>Range</h3><p>Max - Min</p>
+                            <input id="rangeData" placeholder="10,20,30" oninput="updateFormulaLive()">
+                            <div class="formula-result" id="hasilRange">0</div>
+                        </div>`
+        };
+
+        function showFormula(type) {
+            const content = document.getElementById("formulaContent");
+            if (!content) return;
+            content.innerHTML = formulaData[type] || "";
+            updateFormulaLive();
+        }
+
+        function updateFormulaLive() {
+            // Luas Persegi
+            const sisi = document.getElementById("sisi");
+            if (sisi) {
+                const v = parseFloat(sisi.value) || 0;
+                const el = document.getElementById("hasilPersegi");
+                if (el) el.innerText = (v * v).toFixed(4);
+            }
+            // Luas Persegi Panjang
+            const panjang = document.getElementById("panjang");
+            if (panjang) {
+                const p = parseFloat(panjang.value) || 0;
+                const l = parseFloat(document.getElementById("lebar")?.value) || 0;
+                const el = document.getElementById("hasilPP");
+                if (el) el.innerText = (p * l).toFixed(4);
+            }
+            // Luas Segitiga
+            const alas = document.getElementById("alas");
+            if (alas) {
+                const a = parseFloat(alas.value) || 0;
+                const t = parseFloat(document.getElementById("tinggi")?.value) || 0;
+                const el = document.getElementById("hasilSegitiga");
+                if (el) el.innerText = (0.5 * a * t).toFixed(4);
+            }
+            // Volume Kubus
+            const vkubus = document.getElementById("vkubus");
+            if (vkubus) {
+                const s = parseFloat(vkubus.value) || 0;
+                const el = document.getElementById("hasilKubus");
+                if (el) el.innerText = (s * s * s).toFixed(4);
+            }
+            // Volume Balok
+            const vp = document.getElementById("vp");
+            if (vp) {
+                const p = parseFloat(vp.value) || 0;
+                const l = parseFloat(document.getElementById("vl")?.value) || 0;
+                const t = parseFloat(document.getElementById("vt")?.value) || 0;
+                const el = document.getElementById("hasilBalok");
+                if (el) el.innerText = (p * l * t).toFixed(4);
+            }
+            // Keliling Persegi
+            const ksisi = document.getElementById("ksisi");
+            if (ksisi) {
+                const s = parseFloat(ksisi.value) || 0;
+                const el = document.getElementById("hasilKelilingPersegi");
+                if (el) el.innerText = (4 * s).toFixed(4);
+            }
+            // Keliling Lingkaran
+            const radius = document.getElementById("radius");
+            if (radius) {
+                const r = parseFloat(radius.value) || 0;
+                const el = document.getElementById("hasilLingkaran");
+                if (el) el.innerText = (2 * Math.PI * r).toFixed(4);
+            }
+            // Kecepatan
+            const jarak = document.getElementById("jarak");
+            if (jarak) {
+                const j = parseFloat(jarak.value) || 0;
+                const w = parseFloat(document.getElementById("waktu")?.value) || 1;
+                const el = document.getElementById("hasilKecepatan");
+                if (el) el.innerText = (j / w).toFixed(4);
+            }
+            // Persentase
+            const nilai = document.getElementById("nilai");
+            if (nilai) {
+                const n = parseFloat(nilai.value) || 0;
+                const p = parseFloat(document.getElementById("persen")?.value) || 0;
+                const el = document.getElementById("hasilPersen");
+                if (el) el.innerText = (n * p / 100).toFixed(4);
+            }
+            // Bunga
+            const modal = document.getElementById("modal");
+            if (modal) {
+                const m = parseFloat(modal.value) || 0;
+                const r = parseFloat(document.getElementById("rate")?.value) || 0;
+                const t = parseFloat(document.getElementById("tahun")?.value) || 0;
+                const el = document.getElementById("hasilBunga");
+                if (el) el.innerText = (m * r * t / 100).toFixed(4);
+            }
+            // Mean
+            const meanData = document.getElementById("meanData");
+            if (meanData) {
+                const arr = meanData.value.split(",").map(Number).filter(v => !isNaN(v));
+                const el = document.getElementById("hasilMean");
+                if (el && arr.length) el.innerText = (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(4);
+                else if (el) el.innerText = "0";
+            }
+            // Range
+            const rangeData = document.getElementById("rangeData");
+            if (rangeData) {
+                const arr = rangeData.value.split(",").map(Number).filter(v => !isNaN(v));
+                const el = document.getElementById("hasilRange");
+                if (el && arr.length) el.innerText = (Math.max(...arr) - Math.min(...arr)).toFixed(4);
+                else if (el) el.innerText = "0";
+            }
+        }
+
+        // ==================== UNIT CONVERTER ====================
+        const converterUnits = {
+            length: ["mm", "cm", "m", "km"],
+            weight: ["mg", "g", "kg", "ton"],
+            temperature: ["C", "F", "K"],
+            time: ["sec", "min", "hour", "day"],
+            area: ["cm2", "m2", "km2"],
+            volume: ["ml", "l", "m3"]
+        };
+
+        function changeConverter() {
+            const cat = document.getElementById("convCategory")?.value;
+            if (!cat) return;
+            const from = document.getElementById("fromUnit");
+            const to = document.getElementById("toUnit");
+            if (!from || !to) return;
+            from.innerHTML = "";
+            to.innerHTML = "";
+            converterUnits[cat].forEach(unit => {
+                from.innerHTML += `<option>${unit}</option>`;
+                to.innerHTML += `<option>${unit}</option>`;
+            });
+            liveConvert();
+        }
+
+        function swapUnits() {
+            const from = document.getElementById("fromUnit");
+            const to = document.getElementById("toUnit");
+            if (!from || !to) return;
+            const temp = from.value;
+            from.value = to.value;
+            to.value = temp;
+            liveConvert();
+        }
+
+        function liveConvert() {
+            const cat = document.getElementById("convCategory")?.value;
+            if (!cat) return;
+            const val = parseFloat(document.getElementById("convInput")?.value) || 0;
+            const fromVal = document.getElementById("fromUnit")?.value;
+            const toVal = document.getElementById("toUnit")?.value;
+            const resultEl = document.getElementById("converterResult");
+            if (!fromVal || !toVal || !resultEl) return;
+
+            let result = 0;
+
+            if (cat === "length") {
+                const map = { mm: 0.001, cm: 0.01, m: 1, km: 1000 };
+                result = val * map[fromVal] / map[toVal];
+            }
+            if (cat === "weight") {
+                const map = { mg: 0.001, g: 1, kg: 1000, ton: 1000000 };
+                result = val * map[fromVal] / map[toVal];
+            }
+            if (cat === "time") {
+                const map = { sec: 1, min: 60, hour: 3600, day: 86400 };
+                result = val * map[fromVal] / map[toVal];
+            }
+            if (cat === "area") {
+                const map = { cm2: 0.0001, m2: 1, km2: 1000000 };
+                result = val * map[fromVal] / map[toVal];
+            }
+            if (cat === "volume") {
+                const map = { ml: 0.001, l: 1, m3: 1000 };
+                result = val * map[fromVal] / map[toVal];
+            }
+            if (cat === "temperature") {
+                result = convertTemperature(val, fromVal, toVal);
+            }
+
+            resultEl.innerHTML = result.toLocaleString(undefined, { maximumFractionDigits: 6 });
+            saveLastConverter();
+        }
+
+        function convertTemperature(value, from, to) {
+            let c;
+            if (from === "C") c = value;
+            if (from === "F") c = (value - 32) * 5 / 9;
+            if (from === "K") c = value - 273.15;
+            if (to === "C") return c;
+            if (to === "F") return (c * 9 / 5) + 32;
+            if (to === "K") return c + 273.15;
+            return value;
+        }
+
+        function saveLastConverter() {
+            const cat = document.getElementById("convCategory");
+            const from = document.getElementById("fromUnit");
+            const to = document.getElementById("toUnit");
+            if (!cat || !from || !to) return;
+            localStorage.setItem("converter_settings", JSON.stringify({
+                category: cat.value,
+                from: from.value,
+                to: to.value
+            }));
+        }
+
+        function loadLastConverter() {
+            const data = JSON.parse(localStorage.getItem("converter_settings"));
+            if (!data) {
+                changeConverter();
+                return;
+            }
+            const cat = document.getElementById("convCategory");
+            if (cat) cat.value = data.category;
+            changeConverter();
+            setTimeout(() => {
+                const from = document.getElementById("fromUnit");
+                const to = document.getElementById("toUnit");
+                if (from && data.from) from.value = data.from;
+                if (to && data.to) to.value = data.to;
+                liveConvert();
+            }, 100);
+        }
+
+        // ==================== DAILY TOOLS ====================
+        const toolsData = {
+            bmi: `
+                        <div class="tool-box">
+                            <h3>BMI Calculator</h3>
+                            <input id="bmiWeight" placeholder="Berat (kg)" oninput="updateToolLive()">
+                            <input id="bmiHeight" placeholder="Tinggi (cm)" oninput="updateToolLive()">
+                            <div class="tool-result" id="bmiResult">0</div>
+                            <div class="tool-detail" id="bmiDetail">-</div>
+                            <div class="indicator"><span id="bmiBar"></span></div>
+                        </div>`,
+            discount: `
+                        <div class="tool-box">
+                            <h3>Kalkulator Diskon</h3>
+                            <input id="discPrice" placeholder="Harga Awal" oninput="updateToolLive()">
+                            <input id="discPercent" placeholder="Diskon %" oninput="updateToolLive()">
+                            <div class="tool-result" id="discResult">0</div>
+                            <div class="tool-detail" id="discDetail">-</div>
+                        </div>`,
+            tax: `
+                        <div class="tool-box">
+                            <h3>Kalkulator Pajak</h3>
+                            <input id="taxIncome" placeholder="Pendapatan" oninput="updateToolLive()">
+                            <input id="taxRate" placeholder="Pajak %" oninput="updateToolLive()">
+                            <div class="tool-result" id="taxResult">0</div>
+                            <div class="tool-detail" id="taxDetail">-</div>
+                        </div>`,
+            saving: `
+                        <div class="tool-box">
+                            <h3>Kalkulator Tabungan</h3>
+                            <input id="saveMonthly" placeholder="Tabungan per bulan" oninput="updateToolLive()">
+                            <input id="saveMonth" placeholder="Jumlah bulan" oninput="updateToolLive()">
+                            <div class="tool-result" id="saveResult">0</div>
+                            <div class="tool-detail" id="saveDetail">-</div>
+                        </div>`,
+            split: `
+                        <div class="tool-box">
+                            <h3>Bagi Tagihan</h3>
+                            <input id="billAmount" placeholder="Total Tagihan" oninput="updateToolLive()">
+                            <input id="billPeople" placeholder="Jumlah Orang" oninput="updateToolLive()">
+                            <div class="tool-result" id="billResult">0</div>
+                            <div class="tool-detail" id="billDetail">-</div>
+                        </div>`,
+            age: `
+                        <div class="tool-box">
+                            <h3>Kalkulator Umur</h3>
+                            <input type="date" id="birthDate" onchange="updateToolLive()">
+                            <div class="tool-result" id="ageResult">-</div>
+                            <div class="tool-detail" id="ageDetail">-</div>
+                        </div>`
+        };
+
+        function showTool(type) {
+            const content = document.getElementById("toolContent");
+            if (!content) return;
+            content.innerHTML = toolsData[type] || "";
+            updateToolLive();
+        }
+
+        function updateToolLive() {
+            // BMI
+            const bmiWeight = document.getElementById("bmiWeight");
+            if (bmiWeight) {
+                const w = parseFloat(bmiWeight.value) || 0;
+                const h = (parseFloat(document.getElementById("bmiHeight")?.value) || 0) / 100;
+                const resultEl = document.getElementById("bmiResult");
+                const detailEl = document.getElementById("bmiDetail");
+                const barEl = document.getElementById("bmiBar");
+                if (h > 0 && resultEl) {
+                    const bmi = w / (h * h);
+                    resultEl.innerText = bmi.toFixed(1);
+                    let status = "";
+                    if (bmi < 18.5) status = "Kurus";
+                    else if (bmi < 25) status = "Normal";
+                    else if (bmi < 30) status = "Overweight";
+                    else status = "Obesitas";
+                    if (detailEl) detailEl.innerText = status;
+                    if (barEl) barEl.style.width = Math.min(100, bmi * 2) + "%";
+                }
+            }
+            // Discount
+            const discPrice = document.getElementById("discPrice");
+            if (discPrice) {
+                const price = parseFloat(discPrice.value) || 0;
+                const disc = parseFloat(document.getElementById("discPercent")?.value) || 0;
+                const save = price * disc / 100;
+                const final = price - save;
+                const resultEl = document.getElementById("discResult");
+                const detailEl = document.getElementById("discDetail");
+                if (resultEl) resultEl.innerText = final.toFixed(2);
+                if (detailEl) detailEl.innerText = "Potongan: " + save.toFixed(2);
+            }
+            // Tax
+            const taxIncome = document.getElementById("taxIncome");
+            if (taxIncome) {
+                const income = parseFloat(taxIncome.value) || 0;
+                const rate = parseFloat(document.getElementById("taxRate")?.value) || 0;
+                const tax = income * rate / 100;
+                const resultEl = document.getElementById("taxResult");
+                const detailEl = document.getElementById("taxDetail");
+                if (resultEl) resultEl.innerText = tax.toFixed(2);
+                if (detailEl) detailEl.innerText = "Pendapatan Bersih: " + (income - tax).toFixed(2);
+            }
+            // Saving
+            const saveMonthly = document.getElementById("saveMonthly");
+            if (saveMonthly) {
+                const m = parseFloat(saveMonthly.value) || 0;
+                const month = parseFloat(document.getElementById("saveMonth")?.value) || 0;
+                const total = m * month;
+                const resultEl = document.getElementById("saveResult");
+                const detailEl = document.getElementById("saveDetail");
+                if (resultEl) resultEl.innerText = total.toFixed(2);
+                if (detailEl) detailEl.innerText = "Akumulasi Tabungan";
+            }
+            // Split Bill
+            const billAmount = document.getElementById("billAmount");
+            if (billAmount) {
+                const total = parseFloat(billAmount.value) || 0;
+                const people = parseFloat(document.getElementById("billPeople")?.value) || 1;
+                const resultEl = document.getElementById("billResult");
+                const detailEl = document.getElementById("billDetail");
+                if (resultEl) resultEl.innerText = (total / people).toFixed(2);
+                if (detailEl) detailEl.innerText = "Per Orang";
+            }
+            // Age
+            const birthDate = document.getElementById("birthDate");
+            if (birthDate && birthDate.value) {
+                const b = new Date(birthDate.value);
+                const now = new Date();
+                let age = now.getFullYear() - b.getFullYear();
+                const month = now.getMonth() - b.getMonth();
+                if (month < 0 || (month === 0 && now.getDate() < b.getDate())) {
+                    age--;
+                }
+                const resultEl = document.getElementById("ageResult");
+                const detailEl = document.getElementById("ageDetail");
+                if (resultEl) resultEl.innerText = age + " Tahun";
+                if (detailEl) detailEl.innerText = "Lahir: " + birthDate.value;
+            }
+        }
+
+        // ==================== SETTINGS SYSTEM ====================
+        const themes = {
+            cyberpunk: { purple: "#8B5CF6", cyan: "#00E5FF", pink: "#FF4FD8" },
+            purple: { purple: "#A855F7", cyan: "#C084FC", pink: "#E9D5FF" },
+            cyan: { purple: "#06B6D4", cyan: "#22D3EE", pink: "#67E8F9" },
+            pink: { purple: "#EC4899", cyan: "#F472B6", pink: "#F9A8D4" }
+        };
+
+        function changeTheme() {
+            const themeSelect = document.getElementById("themeSelect");
+            if (!themeSelect) return;
+            const theme = themeSelect.value;
+            const t = themes[theme];
+            if (!t) return;
+            document.documentElement.style.setProperty("--purple", t.purple);
+            document.documentElement.style.setProperty("--cyan", t.cyan);
+            document.documentElement.style.setProperty("--pink", t.pink);
+            localStorage.setItem("smartcalc_theme", theme);
+            toast("Theme Updated");
+        }
+
+        function changeLanguage() {
+            const languageSelect = document.getElementById("languageSelect");
+            if (!languageSelect) return;
+            const lang = languageSelect.value;
+            localStorage.setItem("smartcalc_language", lang);
+            toast(lang === "id" ? "Bahasa Indonesia" : "English Enabled");
+        }
+
+        function resetAllData() {
+            if (!confirm("Reset semua data?")) return;
+            localStorage.clear();
+            location.reload();
+        }
+
+        function exportSettings() {
+            const data = {
+                theme: localStorage.getItem("smartcalc_theme"),
+                language: localStorage.getItem("smartcalc_language")
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "smartcalc-settings.json";
+            a.click();
+            URL.revokeObjectURL(url);
+            toast("Exported");
+        }
+
+        function importSettings(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.theme) {
+                        localStorage.setItem("smartcalc_theme", data.theme);
+                        const themeSelect = document.getElementById("themeSelect");
+                        if (themeSelect) themeSelect.value = data.theme;
+                        changeTheme();
+                    }
+                    if (data.language) {
+                        localStorage.setItem("smartcalc_language", data.language);
+                        const languageSelect = document.getElementById("languageSelect");
+                        if (languageSelect) languageSelect.value = data.language;
+                    }
+                    toast("Settings Imported");
+                } catch {
+                    toast("Invalid File");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function loadSettings() {
+            const theme = localStorage.getItem("smartcalc_theme");
+            if (theme) {
+                const themeSelect = document.getElementById("themeSelect");
+                if (themeSelect) themeSelect.value = theme;
+                changeTheme();
+            }
+            const lang = localStorage.getItem("smartcalc_language");
+            if (lang) {
+                const languageSelect = document.getElementById("languageSelect");
+                if (languageSelect) languageSelect.value = lang;
+            }
+        }
+    </script>
+</body>
+</html>
